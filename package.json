@@ -34,7 +34,8 @@
 		"diff": "^4.0.1",
 		"emotion": "^10.0.14",
 		"memoize-one": "^5.0.4",
-		"prop-types": "^15.6.2"
+		"prop-types": "^15.6.2",
+		"sass": "^1.44.0"
 	},
 	"devDependencies": {
 		"@types/classnames": "^2.2.6",
@@ -65,11 +66,10 @@
 		"html-webpack-plugin": "^3.2.0",
 		"mini-css-extract-plugin": "^0.7.0",
 		"mocha": "^6.1.4",
-		"node-sass": "^4.9.3",
 		"raw-loader": "^3.0.0",
 		"react": "^16.5.2",
 		"react-dom": "^16.5.2",
-		"sass-loader": "^7.1.0",
+		"sass-loader": "^10.0.5",
 		"spy": "^1.0.0",
 		"ts-loader": "^6.0.4",
 		"ts-node": "^8.3.0",

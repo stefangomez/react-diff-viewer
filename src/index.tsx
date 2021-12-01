@@ -56,6 +56,15 @@ export interface ReactDiffViewerProps {
 		lineId: string,
 		event: React.MouseEvent<HTMLTableCellElement>,
 	) => void;
+	// Event handler for content click.
+	onContentChange?: (
+		lineId: string,
+		event: React.ChangeEvent<HTMLTableCellElement>,
+	) => void;
+	onKeyDown?: (
+			lineId: string,
+			event: React.KeyboardEvent<HTMLTableCellElement>,
+	) => void;
 	// Array of line ids to highlight lines.
 	highlightLines?: string[];
 	// Style overrides.
@@ -102,6 +111,8 @@ class DiffViewer extends React.Component<
 		compareMethod: PropTypes.oneOf(Object.values(DiffMethod)),
 		renderContent: PropTypes.func,
 		onLineNumberClick: PropTypes.func,
+		onContentChange: PropTypes.func,
+		onKeyDown: PropTypes.func,
 		extraLinesSurroundingDiff: PropTypes.number,
 		styles: PropTypes.object,
 		hideLineNumbers: PropTypes.bool,
@@ -167,6 +178,20 @@ class DiffViewer extends React.Component<
 	private onLineNumberClickProxy = (id: string): any => {
 		if (this.props.onLineNumberClick) {
 			return (e: any): void => this.props.onLineNumberClick(id, e);
+		}
+		return (): void => {};
+	};
+
+	private onContentChangeProxy = (id: string): any => {
+		if (this.props.onContentChange) {
+			return (e: any): void => this.props.onContentChange(id, e);
+		}
+		return (): void => {};
+	};
+
+	private onKeyDownProxy = (id: string): any => {
+		if (this.props.onKeyDown) {
+			return (e: any): void => this.props.onKeyDown(id, e);
 		}
 		return (): void => {};
 	};
@@ -277,7 +302,13 @@ class DiffViewer extends React.Component<
 						{removed && '-'}
 					</pre>
 				</td>
-				<td
+				<td contentEditable={true}
+					onChange={
+						lineNumber && this.onContentChangeProxy(lineNumberTemplate)
+					}
+					onKeyDown={
+						lineNumber && this.onKeyDownProxy(lineNumberTemplate)
+					}
 					className={cn(this.styles.content, {
 						[this.styles.emptyLine]: !content,
 						[this.styles.diffAdded]: added,
