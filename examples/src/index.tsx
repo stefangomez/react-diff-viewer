@@ -104,6 +104,7 @@ class Example extends React.Component<{}, ExampleState> {
     const {oldtxt, newtxt} = this.state;
     const line_ = parseInt(clickedLines[0].split('-')[1]); //TODO TO SUPPRESS lineNb
     console.log("keyd - clickedLines[0]", clickedLines[0], "line_: ", line_);
+    let isUp = false;
     if(e.key === 'ArrowUp' || e.key === 'ArrowDown')
     {
       if(firstAssign)
@@ -117,6 +118,7 @@ class Example extends React.Component<{}, ExampleState> {
       toAdd = 1;
       if (e.key === 'ArrowUp')
       {
+        isUp = true;
         toAdd = -1;
       }
       lineId = lineId + toAdd;
@@ -126,9 +128,21 @@ class Example extends React.Component<{}, ExampleState> {
     }
     console.log("key: ", e);
     const content = document.getElementsByClassName('css-vl0irh-content');
-    console.log(content[lineId*2-1]);
+    let tempLineId = lineId*2;
+    while(content[tempLineId-1].classList.contains("css-1yptt6o-empty-line"))
+    {
+      if (isUp)
+      {
+        tempLineId -= 2;
+      }
+      else{
+        tempLineId += 2;
+      }
+    }
+    console.log(content[tempLineId-1]);
     const contentRef = `${prefix}-${lineId}`;
-    content[lineId].setAttribute('id', contentRef);
+    content[tempLineId-1].setAttribute('id', contentRef);
+    lineId = tempLineId/2;
     document.getElementById(contentRef).focus();
     // console.log('typeof createref : ', typeof(React.createRef()));
   };
@@ -181,6 +195,7 @@ class Example extends React.Component<{}, ExampleState> {
             useDarkTheme
             leftTitle="webpack.config.js master@2178133 - pushed 2 hours ago."
             rightTitle="webpack.config.js master@64207ee - pushed 13 hours ago."
+            showDiffOnly={false}
           />
         </div>
         <footer>
