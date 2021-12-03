@@ -6,6 +6,10 @@ import ReactDiff, { DiffMethod } from '../../lib/index';
 
 const oldJs = require('./diff/javascript/old.rjs').default;
 const newJs = require('./diff/javascript/new.rjs').default;
+let lineId = 0;
+let prefix = 'L';
+let firstAssign = true;
+let clickedLines: string[] = [];
 
 const logo = require('../../logo.png');
 
@@ -15,17 +19,35 @@ interface ExampleState {
   language?: string;
   enableSyntaxHighlighting?: boolean;
   compareMethod?: DiffMethod;
+  newtxt?: string[];
+  oldtxt?: string[];
+  clickedLines?: string[];
 }
 
 const P = (window as any).Prism;
 
+// const utilizeFocus = () => {
+//   const ref:React.Ref<any> = React.createRef();
+//   const setFocus = () => {ref.current &&  ref.current.focus()}
+
+//   return {setFocus, ref} 
+// }
+
 class Example extends React.Component<{}, ExampleState> {
+  contentRef: Object;
+
   public constructor(props: any) {
     super(props);
+    const newtxt = newJs.split('\n');
+    const oldtxt = oldJs.split('\n');
     this.state = {
       highlightLine: [],
       enableSyntaxHighlighting: true,
+      newtxt: newtxt,
+      oldtxt: oldtxt,
+      clickedLines: []
     };
+    this.contentRef = React.createRef();
   }
 
   private onLineNumberClick = (
@@ -48,6 +70,67 @@ class Example extends React.Component<{}, ExampleState> {
     this.setState({
       highlightLine,
     });
+  };
+
+  private saveContent = (
+    id: string,
+    e: React.FormEvent<HTMLTableCellElement>,
+  ): void => {
+
+    console.log("bang: ", e);
+  };
+
+  private onContentClick = (
+    id: string,
+    e: React.MouseEvent<HTMLTableCellElement>,
+  ): void => 
+  {
+    firstAssign = true;
+    if (clickedLines.includes(id)) {
+      //keeping the last line clicked at the first index of the array
+      clickedLines = clickedLines.filter(e => e !== id);
+    } 
+    clickedLines.unshift(id);
+    // this.setState({ clickedLines });
+    console.log("onContentClick - clicked lines: ", clickedLines);
+  };
+
+  private keyd = (
+    id: string,
+    e: React.KeyboardEvent<HTMLTableCellElement>,
+  ): void => {
+    
+    let toAdd:number;
+    const {oldtxt, newtxt} = this.state;
+    const line_ = parseInt(clickedLines[0].split('-')[1]); //TODO TO SUPPRESS lineNb
+    console.log("keyd - clickedLines[0]", clickedLines[0], "line_: ", line_);
+    if(e.key === 'ArrowUp' || e.key === 'ArrowDown')
+    {
+      if(firstAssign)
+      {
+        prefix = id.split('-')[0];
+        let lineNb = parseInt(id.split('-')[1]);
+        console.log("keyd - pref: ", prefix, "lineNb: ", lineNb);
+        firstAssign = false;
+        lineId = line_;
+      }
+      toAdd = 1;
+      if (e.key === 'ArrowUp')
+      {
+        toAdd = -1;
+      }
+      lineId = lineId + toAdd;
+      lineId = lineId === 0 ? 1 : lineId ;
+      const source = prefix === 'L' ? oldtxt : newtxt;
+      console.log("nb: ", lineId, "line: ", source[lineId-1]);
+    }
+    console.log("key: ", e);
+    const content = document.getElementsByClassName('css-vl0irh-content');
+    console.log(content[lineId*2-1]);
+    const contentRef = `${prefix}-${lineId}`;
+    content[lineId].setAttribute('id', contentRef);
+    document.getElementById(contentRef).focus();
+    // console.log('typeof createref : ', typeof(React.createRef()));
   };
 
   private syntaxHighlight = (str: string): any => {
@@ -88,7 +171,10 @@ class Example extends React.Component<{}, ExampleState> {
           <ReactDiff
             highlightLines={this.state.highlightLine}
             onLineNumberClick={this.onLineNumberClick}
+            onContentChange={this.saveContent}
+            onKeyDown={this.keyd}
             oldValue={oldJs}
+            onContentSelect={this.onContentClick}
             splitView
             newValue={newJs}
             renderContent={this.syntaxHighlight}
