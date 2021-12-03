@@ -95,6 +95,8 @@ class Example extends React.Component<{}, ExampleState> {
     console.log("onContentClick - clicked lines: ", clickedLines);
   };
 
+  // TODO : do not overwrite the already set ids..
+  // go left right.
   private keyd = (
     id: string,
     e: React.KeyboardEvent<HTMLTableCellElement>,
@@ -128,7 +130,7 @@ class Example extends React.Component<{}, ExampleState> {
     }
     console.log("key: ", e);
     const content = document.getElementsByClassName('css-vl0irh-content');
-    let tempLineId = lineId*2;
+    let tempLineId = prefix === 'L'? lineId * 2 - 1 : lineId * 2;
     while(content[tempLineId-1].classList.contains("css-1yptt6o-empty-line"))
     {
       if (isUp)
@@ -142,7 +144,7 @@ class Example extends React.Component<{}, ExampleState> {
     console.log(content[tempLineId-1]);
     const contentRef = `${prefix}-${lineId}`;
     content[tempLineId-1].setAttribute('id', contentRef);
-    lineId = tempLineId/2;
+    lineId = prefix === 'L'? (tempLineId + 1) / 2  : tempLineId/2;
     document.getElementById(contentRef).focus();
     // console.log('typeof createref : ', typeof(React.createRef()));
   };
