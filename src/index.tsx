@@ -69,6 +69,10 @@ export interface ReactDiffViewerProps {
 		lineId: string,
 		event: React.MouseEvent<HTMLTableCellElement>,
 	) => void;
+	onContentBlur?: (
+		lineId: string,
+		event: React.FocusEvent<HTMLTableCellElement>,
+	) => void;
 	// Array of line ids to highlight lines.
 	highlightLines?: string[];
 	// Style overrides.
@@ -118,6 +122,7 @@ class DiffViewer extends React.Component<
 		onContentChange: PropTypes.func,
 		onKeyDown: PropTypes.func,
 		onContentSelect: PropTypes.func,
+		onContentBlur: PropTypes.func,
 		extraLinesSurroundingDiff: PropTypes.number,
 		styles: PropTypes.object,
 		hideLineNumbers: PropTypes.bool,
@@ -204,6 +209,13 @@ class DiffViewer extends React.Component<
 	private onContentSelectProxy = (id: string): any => {
 		if (this.props.onContentSelect) {
 			return (e: any): void => this.props.onContentSelect(id, e);
+		}
+		return (): void => {};
+	};
+
+	private onContentBlurProxy = (id: string): any => {
+		if (this.props.onContentBlur) {
+			return (e: any): void => this.props.onContentBlur(id, e);
 		}
 		return (): void => {};
 	};
@@ -314,7 +326,7 @@ class DiffViewer extends React.Component<
 						{removed && '-'}
 					</pre>
 				</td>
-				<td contentEditable={true}
+				<td contentEditable={true} id={lineNumberTemplate}
 					onInput={
 						lineNumber && this.onContentChangeProxy(lineNumberTemplate)
 					}
@@ -323,6 +335,9 @@ class DiffViewer extends React.Component<
 					}
 					onClick={
 						lineNumber && this.onContentSelectProxy(lineNumberTemplate)
+					}
+					onBlur={
+						lineNumber && this.onContentBlurProxy(lineNumberTemplate)
 					}
 					className={cn(this.styles.content, {
 						[this.styles.emptyLine]: !content,

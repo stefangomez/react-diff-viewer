@@ -8,9 +8,9 @@ const oldJs = require('./diff/javascript/old.rjs').default;
 const newJs = require('./diff/javascript/new.rjs').default;
 let lineId = 0;
 let prefix = 'L';
-let firstAssign = true;
 let clickedLines: string[] = [];
-
+const newtxt = newJs.split('\n');
+const oldtxt = oldJs.split('\n');
 const logo = require('../../logo.png');
 
 interface ExampleState {
@@ -26,20 +26,22 @@ interface ExampleState {
 
 const P = (window as any).Prism;
 
-// const utilizeFocus = () => {
-//   const ref:React.Ref<any> = React.createRef();
-//   const setFocus = () => {ref.current &&  ref.current.focus()}
-
-//   return {setFocus, ref} 
-// }
-
 class Example extends React.Component<{}, ExampleState> {
   contentRef: Object;
+  isChange: boolean;
+  isEnter: boolean;
+  timerID: number;
+  changedLines: string[];
+
+  componentDidMount() {
+  }
+
+  componentWillUnmount() {
+  }
 
   public constructor(props: any) {
     super(props);
-    const newtxt = newJs.split('\n');
-    const oldtxt = oldJs.split('\n');
+    this.isChange = false;
     this.state = {
       highlightLine: [],
       enableSyntaxHighlighting: true,
@@ -48,6 +50,8 @@ class Example extends React.Component<{}, ExampleState> {
       clickedLines: []
     };
     this.contentRef = React.createRef();
+    this.isEnter = false;
+    this.changedLines = [];
   }
 
   private onLineNumberClick = (
@@ -72,51 +76,34 @@ class Example extends React.Component<{}, ExampleState> {
     });
   };
 
-  private saveContent = (
-    id: string,
-    e: React.FormEvent<HTMLTableCellElement>,
-  ): void => {
-
-    console.log("bang: ", e);
-  };
-
   private onContentClick = (
     id: string,
     e: React.MouseEvent<HTMLTableCellElement>,
   ): void => 
   {
-    firstAssign = true;
     if (clickedLines.includes(id)) {
       //keeping the last line clicked at the first index of the array
-      clickedLines = clickedLines.filter(e => e !== id);
+      clickedLines = clickedLines.filter(el => el !== id);
     } 
     clickedLines.unshift(id);
-    // this.setState({ clickedLines });
+    prefix = id.split('-')[0];
+    lineId = parseInt(id.split('-')[1]);
     console.log("onContentClick - clicked lines: ", clickedLines);
   };
 
   // TODO : do not overwrite the already set ids..
-  // go left right.
   private keyd = (
     id: string,
     e: React.KeyboardEvent<HTMLTableCellElement>,
   ): void => {
-    
     let toAdd:number;
     const {oldtxt, newtxt} = this.state;
-    const line_ = parseInt(clickedLines[0].split('-')[1]); //TODO TO SUPPRESS lineNb
+    const line_ = parseInt(clickedLines[0].split('-')[1]);
     console.log("keyd - clickedLines[0]", clickedLines[0], "line_: ", line_);
     let isUp = false;
+    console.log("key: ", e);
     if(e.key === 'ArrowUp' || e.key === 'ArrowDown')
     {
-      if(firstAssign)
-      {
-        prefix = id.split('-')[0];
-        let lineNb = parseInt(id.split('-')[1]);
-        console.log("keyd - pref: ", prefix, "lineNb: ", lineNb);
-        firstAssign = false;
-        lineId = line_;
-      }
       toAdd = 1;
       if (e.key === 'ArrowUp')
       {
@@ -127,28 +114,115 @@ class Example extends React.Component<{}, ExampleState> {
       lineId = lineId === 0 ? 1 : lineId ;
       const source = prefix === 'L' ? oldtxt : newtxt;
       console.log("nb: ", lineId, "line: ", source[lineId-1]);
+      const content = document.getElementsByClassName('css-vl0irh-content');
+      const contentRef = `${prefix}-${lineId}`;
+      document.getElementById(contentRef).focus();
+      console.log("======================");
     }
-    console.log("key: ", e);
-    const content = document.getElementsByClassName('css-vl0irh-content');
-    let tempLineId = prefix === 'L'? lineId * 2 - 1 : lineId * 2;
-    while(content[tempLineId-1].classList.contains("css-1yptt6o-empty-line"))
+    else if(e.key === "Enter")
     {
-      if (isUp)
-      {
-        tempLineId -= 2;
-      }
-      else{
-        tempLineId += 2;
-      }
+      this.isEnter = true;      
     }
-    console.log(content[tempLineId-1]);
-    const contentRef = `${prefix}-${lineId}`;
-    content[tempLineId-1].setAttribute('id', contentRef);
-    lineId = prefix === 'L'? (tempLineId + 1) / 2  : tempLineId/2;
-    document.getElementById(contentRef).focus();
-    // console.log('typeof createref : ', typeof(React.createRef()));
   };
 
+  private onContentBlur = (
+    id: string,
+    e: React.FocusEvent<HTMLTableCellElement>,
+  ): void => 
+  {
+    if (this.isChange)
+    {
+      this.isChange = false;
+      console.log("blur - id: ",id," event: ", e);
+      const content = document.getElementById(id);
+      const pref = id.split('-')[0];
+      const lineNb = parseInt(id.split('-')[1]);
+      if (pref === 'L')
+      {
+        const contentText = content.innerText;
+        // if (contentText.includes('\n'))
+        if (this.isEnter)
+        {
+          this.isEnter = false;
+          const contentTextArr = contentText.split("\n");
+          console.log("innert: ", contentTextArr);
+          oldtxt.splice(lineNb-1, 1, ...contentTextArr);
+          console.log("newcc: ", oldtxt);
+        }
+        else{
+          oldtxt[lineNb-1] = contentText;
+        }
+        this.setState({oldtxt});
+      }
+      else
+      {
+        let uu =8;
+        uu++;
+      }
+    }
+    
+  }
+
+  private onContentChange = (
+    id: string,
+    e: React.FormEvent<HTMLTableCellElement>,
+  ): void => {
+    this.isChange = true;
+    console.log("bang: ", e);
+    if (!this.changedLines.includes(id))
+    {
+      this.changedLines.push(id);
+    }
+  }
+
+  // private saveContent = (): void => 
+  // {
+  //   if (this.isChange)
+  //   {
+  //     this.isChange = false;
+  //     console.log("changedlines: ", this.changedLines);
+  //     this.changedLines.forEach(lineRef => {
+  //       const content = document.getElementById(lineRef);
+  //       const pref = lineRef.split('-')[0];
+  //       const lineNb = parseInt(lineRef.split('-')[1]);
+  //       if (pref === 'L')
+  //       {
+  //         const contentText = content.innerText;
+  //         if (contentText.includes('\n'))
+  //         {
+  //           const contentTextArr = contentText.split("\n");
+  //           console.log("innert: ", contentTextArr);
+  //           oldtxt.splice(lineNb-1, 1, ...contentTextArr);
+  //           console.log("newcc: ", oldtxt);
+  //         }
+  //         else{
+  //           oldtxt[lineNb-1] = contentText;
+  //         }
+  //         this.setState({oldtxt});
+  //       }
+  //       else
+  //       {
+  //         let uu =8;
+  //         uu++;
+  //       }
+  //     });
+      
+  //     this.changedLines = [];
+  //     if(this.isEnter)
+  //     {
+  //       this.isEnter = false;
+  //       const contentRef = `${prefix}-${lineId}`;
+  //       console.log("contentreffff: ", contentRef);
+  //       let content = document.getElementById(contentRef);
+        
+  //     }
+  //   }
+  // };
+
+
+
+  
+  
   private syntaxHighlight = (str: string): any => {
     if (!str) return;
     const language = P.highlight(str, P.languages.javascript);
@@ -187,12 +261,15 @@ class Example extends React.Component<{}, ExampleState> {
           <ReactDiff
             highlightLines={this.state.highlightLine}
             onLineNumberClick={this.onLineNumberClick}
-            onContentChange={this.saveContent}
+            onContentChange={this.onContentChange}
             onKeyDown={this.keyd}
-            oldValue={oldJs}
+            // oldValue={oldJs}
+            oldValue={this.state.oldtxt.join("\n")}
             onContentSelect={this.onContentClick}
+            onContentBlur={this.onContentBlur}
             splitView
-            newValue={newJs}
+            newValue={this.state.newtxt.join("\n")}
+            // newValue={newJs}
             renderContent={this.syntaxHighlight}
             useDarkTheme
             leftTitle="webpack.config.js master@2178133 - pushed 2 hours ago."
